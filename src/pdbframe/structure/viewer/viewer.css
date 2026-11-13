@@ -1,0 +1,71 @@
+/* Layout of the pf.view() widget. #ROOT is replaced by the widget's own id. */
+
+#ROOT { font-family: Helvetica, Arial, sans-serif; font-size: 13px; color: #222; }
+
+/* toolbar: menus, toggles and buttons */
+#ROOT .bar { position: relative; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px;
+  margin-bottom: 6px; }
+#ROOT button, #ROOT summary, #ROOT label.check { font-size: 12px; padding: 1px 8px; cursor: pointer;
+  border: 1px solid #aaa; border-radius: 3px; background: #f4f4f4; line-height: 18px; }
+#ROOT label.check input { margin: 0 2px 0 0; vertical-align: -2px; }
+#ROOT details.dropdown { position: relative; }
+#ROOT summary { list-style: none; user-select: none; }
+#ROOT summary::-webkit-details-marker { display: none; }
+#ROOT .help summary { font-weight: bold; border-radius: 10px; }
+#ROOT .menu { position: absolute; z-index: 10; margin-top: 2px; padding: 4px 8px;
+  background: white; border: 1px solid #aaa; border-radius: 3px; white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); }
+#ROOT .menu label { display: block; line-height: 20px; cursor: pointer; }
+#ROOT .menu-head { font-weight: bold; color: #555; margin-top: 4px; }
+/* the help box hangs from the toolbar, so it never runs off the widget's edge */
+#ROOT details.help { position: static; }
+#ROOT .helpbox { left: 0; top: 100%; width: 420px; white-space: normal; line-height: 1.4; }
+#ROOT .helpbox ul { margin: 2px 0 6px; padding-left: 18px; }
+#ROOT kbd { font-family: inherit; font-size: 11px; padding: 0 4px; border: 1px solid #bbb;
+  border-radius: 3px; background: #f7f7f7; }
+
+/* sequence panel: one row per chain */
+#ROOT .model-head { font-weight: bold; margin: 2px 0 4px; }
+#ROOT .row { display: flex; align-items: flex-start; margin-bottom: 6px; }
+#ROOT .chain { flex: none; width: 70px; padding: 1px 0; border-radius: 3px;
+  font-weight: bold; text-align: center; margin: 12px 8px 0 0; cursor: pointer;
+  user-select: none; }
+#ROOT .chain.picked { outline: 3px solid var(--pick); }
+#ROOT .chain.wide { width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 11px; }
+/* several structures: each lead chain's group of aligned rows is set apart */
+#ROOT.many .group { margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px dashed #e4e4e4; }
+#ROOT .block + .block { margin-top: 4px; }
+#ROOT .seq { display: flex; flex-wrap: wrap; user-select: none;
+  font-family: Menlo, Consolas, monospace; }
+#ROOT .res { width: 12px; text-align: center; cursor: pointer; }
+#ROOT .num { height: 12px; font-size: 9px; color: #888; white-space: nowrap;
+  overflow: visible; text-align: left; }
+#ROOT .aa { font-size: 12px; line-height: 16px; border-radius: 2px; }
+#ROOT .aa.sel { background: var(--highlight) !important; color: black !important; }
+#ROOT .aa.picked { background: var(--pick) !important; color: black !important; }
+#ROOT .aa.hov { outline: 2px solid #000; outline-offset: -1px; }
+#ROOT .aa.gap { color: #bbb; cursor: default; }
+
+/* legend: regions, the value scale, the compared structure */
+#ROOT .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+#ROOT .chip { display: inline-block; padding: 1px 6px; border-radius: 3px; }
+#ROOT .chip.toggle { cursor: pointer; user-select: none; }
+#ROOT .chip.off { opacity: 0.3; text-decoration: line-through; }
+#ROOT .flip { display: inline-flex; gap: 4px; }
+#ROOT:focus { outline: none; }
+#ROOT .scale { display: inline-flex; align-items: center; gap: 4px; }
+#ROOT .gradient { display: inline-block; width: 90px; height: 10px; border: 1px solid #ccc; }
+
+#ROOT .info { min-height: 18px; margin: 4px 0; color: #333; }
+#ROOT .picks { margin: 0 0 6px; }
+#ROOT .picks table { border-collapse: collapse; font-size: 12px; margin-top: 2px; }
+#ROOT .picks td, #ROOT .picks th { border: 1px solid #ddd; padding: 1px 6px; text-align: left; }
+#ROOT .picks th { background: #f4f4f4; font-weight: normal; color: #555; }
+
+/* 3D panel, with the axes in its bottom-left corner */
+#ROOT .view { position: relative; border: 1px solid #ddd; }
+#ROOT .axes { position: absolute; left: 0; bottom: 0; width: 90px; height: 90px;
+  z-index: 5; pointer-events: none; }
+#ROOT .axis-letter { position: absolute; transform: translate(-50%, -50%); z-index: 6;
+  font: bold 12px Helvetica, Arial, sans-serif; }

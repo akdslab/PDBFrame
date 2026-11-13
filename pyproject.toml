@@ -1,0 +1,51 @@
+[project]
+name = "pdbframe"
+dynamic = ["version"]
+description = "pandas-based protein sequence (SeqFrame) and structure (PDBFrame) objects"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Ali Davari", email = "davari@uchicago.edu" }]
+license = { file = "LICENSE" }
+dependencies = [
+    # copy-on-write: derived PDBFrames share column data with their parent until changed
+    "pandas>=3.0",
+    "numpy>=1.24",
+    # PairwiseAligner with .coordinates on every alignment
+    "biopython>=1.80",
+    # cKDTree for contacts, lDDT and DockQ
+    "scipy>=1.10",
+]
+
+[project.scripts]
+pdbframe = "pdbframe.cli:main"
+
+[project.optional-dependencies]
+# 3D viewing in Jupyter (PDBFrame.view)
+view = ["py3Dmol>=2.0"]
+# Kept in sync with [dependency-groups].dev below
+dev = ["pytest>=8.0", "ipykernel>=6.29", "nbformat>=5.10", "nbconvert>=7.16", "py3Dmol>=2.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/pdbframe/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pdbframe"]
+
+# the docs and the user skills go in the wheel too (pdbframe docs, pdbframe skills install),
+# so they match the installed version
+[tool.hatch.build.targets.wheel.force-include]
+"docs" = "pdbframe/docs"
+".claude/skills/analyze-structure" = "pdbframe/skills/analyze-structure"
+".claude/skills/compare-structures" = "pdbframe/skills/compare-structures"
+".claude/skills/show-structure" = "pdbframe/skills/show-structure"
+".claude/skills/align-sequences" = "pdbframe/skills/align-sequences"
+
+[dependency-groups]
+dev = ["pytest>=8.0", "ipykernel>=6.29", "nbformat>=5.10", "nbconvert>=7.16", "py3Dmol>=2.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
