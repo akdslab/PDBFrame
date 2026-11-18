@@ -4,6 +4,19 @@ All notable changes to this project are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Minor edits bump the last
 number. Changes that would break existing code are announced under *Deprecated* first.
 
+## [0.2.1] - 2026-11-18
+
+### Added
+- `view(spheres=...)`: balls drawn in the structure's coordinates, with `center`,
+  `radius`, `color`, `label`, `group` and `info`. They share the arrows' group
+  checkboxes, so the edges and nodes of a graph can switch together.
+- `view(opacity=...)`: how solid the structure is drawn, 0 to 1. Below 1 it keeps its
+  shape and colors and lets drawn shapes show through.
+- `view(sequence_only=True)`: the sequences only, with their regions and values; a *Show 3D*
+  button opens the 3D view under them.
+- Arrows take `head=False`, drawing a plain cylinder for something with no direction,
+  and `info=`, text shown in the view when that arrow or sphere is clicked.
+
 ## [0.2.0] - 2026-11-13
 
 First public release.

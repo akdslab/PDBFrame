@@ -25,6 +25,7 @@ pf.view(regions={'pocket': pf.near(pf.select(chains='C'), 4), 'helix': ('A', 50,
         compare=model.superpose(pf),         # residues linked by sequence; grey
         values=model.metrics.lddt(pf, per_residue=True),   # or 'plddt'; red low -> blue high
         surface=False, style='cartoon').save('page.html')
+pf.view(regions={'peptide': 'C'}, sequence_only=True)  # *Show 3D* opens the structure
 pf.py3Dmol(other, colors=['lightgrey', 'orange'])   # plain overlay of several structures
 ```
 
@@ -41,6 +42,9 @@ pf.view(regions={...}, region_groups={'CDRs': ['CDR1', 'CDR2']}, hidden_regions=
         orientation='standard',              # open in that orientation (or a 3x3 rotation)
         arrows=[(start, end, 'red', 'axis'),  # vectors in structure coordinates, or dicts with
                 {'start': s, 'end': e, 'group': 'normals'}])  # color, label, radius, group
+pf.view(arrows=[{'start': a, 'end': b, 'head': False, 'group': 'graph', 'info': 'edge a-b'}],
+        spheres=[(a, 0.8, 'orange', 'node a')],   # nodes; same group names share a checkbox
+        opacity=0.4)                              # see-through structure, shapes show inside
 ```
 Legend chips switch regions (Shift-click: only this one). *Structures* / *One at a time*
 (◀ ▶, arrow keys) flip between models. `compact=True` keeps big ensembles small.

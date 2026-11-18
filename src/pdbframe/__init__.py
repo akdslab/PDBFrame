@@ -11,4 +11,4 @@ from .structure.viewer import view_many as view
 from .resources import docs, install_skills
 
 __all__ = ['SeqFrame', 'PDBFrame', 'detect_type', 'view', 'docs', 'install_skills']
-__version__ = '0.2.0'
+__version__ = '0.2.1'

@@ -152,6 +152,7 @@ mouse controls, and `.save('view.html')` writes a standalone page.
 | `regions={name: spec}` | residues to mark. A spec is a chain ID, a `(chain, start, end)` range, a frame such as `pf.select(...)`, or a list of these. Each region can be switched on and off in the legend |
 | `hidden_regions=[...]`, `region_groups={group: [names]}`, `region_colors=`, `region_styles=` | regions that start off; legend entries that switch several at once; colors; an extra style per region |
 | `sequence=True` or `['A', 'B']` | chains whose sequences show at first |
+| `sequence_only=True` | the sequences only (every chain, unless `sequence=` names some), with their regions and values; *Show 3D* opens the structure under them |
 | `compare=other` (a list, or `{name: frame}`) | more structures in the same view, residues linked by sequence |
 | `superpose=True` or chain IDs | fit the compared structures onto `pf` first (only the drawn copies move) |
 | `values=` | color by per-residue values: a table such as `model.metrics.lddt(ref, per_residue=True)`, or `'plddt'` / `'bfactor'`. Also `value_column=`, `value_range=` |
@@ -159,7 +160,9 @@ mouse controls, and `.save('view.html')` writes a standalone page.
 | `style=` | `'cartoon'`, `'stick'`, `'line'` or `'sphere'` |
 | `colors=`, `compare_color=` | chain colors; one color for the compared structures |
 | `surface=True`, `ligands=True`, `axes=True` | molecular surface, ligands as sticks, x/y/z arrows |
-| `arrows=[(start, end, color, label), ...]` | vectors drawn in `pf`'s coordinates, one checkbox per `group` |
+| `arrows=[(start, end, color, label), ...]` | vectors drawn in `pf`'s coordinates, one checkbox per `group`. `head=False` for a plain cylinder, `info=` for text shown when it is clicked |
+| `spheres=[(center, radius, color, label), ...]` | balls in `pf`'s coordinates, sharing the arrows' group checkboxes - the nodes to the arrows' edges |
+| `opacity=0.4` | how solid the structure is drawn, so shapes inside it show through |
 | `orientations={label: R}` | buttons that turn the camera to saved orientations |
 | `orientation=R` or a label | the orientation the view opens in (and *Reset view* returns to). Only the camera turns; coordinates are unchanged |
 | `names=`, `width=`, `height=`, `compact=True` | structure names; panel size; backbone only (smaller pages) |

@@ -316,6 +316,14 @@ def _rotation(spec) -> tuple[list, list]:
     return R.tolist(), t.tolist()
 
 
+def _opacity(opacity) -> float:
+    """How solid the structure is drawn, 0 to 1."""
+    value = float(opacity)
+    if not 0.0 <= value <= 1.0:
+        raise ValueError(f'opacity must be between 0 and 1, not {opacity}')
+    return value
+
+
 def _arrows(arrows) -> list[dict]:
     """Arrows as JSON: each a dict or a ``(start, end[, color[, label]])`` tuple."""
     if arrows is None:
@@ -326,10 +334,10 @@ def _arrows(arrows) -> list[dict]:
     for i, a in enumerate(arrows):
         if not isinstance(a, dict):
             a = dict(zip(('start', 'end', 'color', 'label'), a))
-        unknown = set(a) - {'start', 'end', 'color', 'label', 'radius', 'group'}
+        unknown = set(a) - {'start', 'end', 'color', 'label', 'radius', 'group', 'head', 'info'}
         if unknown:
             raise KeyError(f'arrow {i}: unknown keys {sorted(unknown)}; use start, end, '
-                           'color, label, radius, group')
+                           'color, label, radius, group, head, info')
         try:
             start, end = (np.asarray(a[k], float).reshape(3) for k in ('start', 'end'))
         except (KeyError, ValueError):
@@ -340,7 +348,38 @@ def _arrows(arrows) -> list[dict]:
                     'color': a.get('color') or ARROW_COLORS[i % len(ARROW_COLORS)],
                     'label': None if a.get('label') is None else str(a['label']),
                     'radius': float(a.get('radius', 0.4)),
-                    'group': str(a.get('group') or 'Arrows')})
+                    'group': str(a.get('group') or 'Arrows'),
+                    'head': bool(a.get('head', True)),
+                    'info': None if a.get('info') is None else str(a['info'])})
+    return out
+
+
+def _spheres(spheres) -> list[dict]:
+    """Spheres as JSON: each a dict or a ``(center[, radius[, color[, label]]])`` tuple."""
+    if spheres is None:
+        return []
+    if isinstance(spheres, dict) and 'center' in spheres:
+        spheres = [spheres]
+    out = []
+    for i, sp in enumerate(spheres):
+        if not isinstance(sp, dict):
+            sp = dict(zip(('center', 'radius', 'color', 'label'), sp))
+        unknown = set(sp) - {'center', 'radius', 'color', 'label', 'group', 'info'}
+        if unknown:
+            raise KeyError(f'sphere {i}: unknown keys {sorted(unknown)}; use center, '
+                           'radius, color, label, group, info')
+        try:
+            center = np.asarray(sp['center'], float).reshape(3)
+        except (KeyError, ValueError):
+            raise ValueError(f'sphere {i}: needs a center of 3 numbers') from None
+        if not np.isfinite(center).all():
+            raise ValueError(f'sphere {i}: center must be finite')
+        out.append({'center': center.tolist(),
+                    'color': sp.get('color') or ARROW_COLORS[i % len(ARROW_COLORS)],
+                    'label': None if sp.get('label') is None else str(sp['label']),
+                    'radius': float(sp.get('radius', 0.6)),
+                    'group': str(sp.get('group') or 'Spheres'),
+                    'info': None if sp.get('info') is None else str(sp['info'])})
     return out
 
 
@@ -355,7 +394,8 @@ def view(frame, regions=None, sequence=False, compare=None, values=None,
          axes: bool = True, width: int = 900, height: int = 500,
          names: list | None = None, hidden_regions=None, region_groups: dict | None = None,
          orientations: dict | None = None, orientation_center: str = 'structure',
-         compact: bool = False, superpose=False, arrows=None, orientation=None) -> Viewer:
+         compact: bool = False, superpose=False, arrows=None, spheres=None,
+         opacity: float = 1.0, orientation=None, sequence_only: bool = False) -> Viewer:
     """3D view of a structure, with each chain's sequence linked to it.
 
     Args:
@@ -430,6 +470,19 @@ def view(frame, regions=None, sequence=False, compare=None, values=None,
             ``start``, ``end`` and optionally ``color``, ``label`` (text at the
             tip), ``radius`` (Å, default 0.4) and ``group``. Each group (default
             ``'Arrows'``) gets a checkbox that shows and hides its arrows.
+            ``head=False`` draws a plain cylinder, for something that has no
+            direction; ``info`` is text shown when the arrow is clicked.
+        spheres: balls to draw in `frame`'s coordinates, e.g. the nodes of a graph
+            whose edges are `arrows` - a list of ``(center,)``,
+            ``(center, radius, color, label)`` or dicts with ``center`` and
+            optionally ``color``, ``label``, ``radius`` (A, default 0.6),
+            ``group`` and ``info``. Groups share the arrows' checkboxes, so an
+            edge group and its nodes can carry the same name and switch together.
+        opacity: how solid the structure is drawn, 0 to 1 (default 1). Below 1 it
+            keeps its shape and colors but lets drawn shapes show through.
+        sequence_only: open the sequences only (every chain, unless `sequence`
+            names some), with their regions and values; a *Show 3D* button opens
+            the 3D view under them.
     """
     others = compare if isinstance(compare, (list, tuple)) else \
         list(compare.values()) if isinstance(compare, dict) else \
@@ -488,6 +541,8 @@ def view(frame, regions=None, sequence=False, compare=None, values=None,
     value_data = [_value_colors(f, v, value_column, value_range) if v is not None else None
                   for f, v in zip(frames, value_specs)]
 
+    if sequence_only and (sequence is False or sequence is None):
+        sequence = True
     shown = _shown(frame, sequence)
     pairs_by_model = {m: _residue_pairs(frame, frames[m]) for m in range(1, n)}
     models, inners = [], []
@@ -545,7 +600,9 @@ def view(frame, regions=None, sequence=False, compare=None, values=None,
             'style': styles[0], 'highlight': HIGHLIGHT_COLOR, 'pick': PICK_COLOR,
             'surface': bool(surface), 'ligands': bool(ligands) and not compact,
             'axes': bool(axes), 'width': width, 'height': height,
-            'arrows': _arrows(arrows)}
+            'sequence_only': bool(sequence_only),
+            'arrows': _arrows(arrows), 'spheres': _spheres(spheres),
+            'opacity': _opacity(opacity)}
     here = files(__package__)
     html = _PAGE.format(uid=uid,
                         css=here.joinpath('viewer.css').read_text().replace('#ROOT', f'#pfv-{uid}'),

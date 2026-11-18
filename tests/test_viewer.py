@@ -60,6 +60,15 @@ def test_sequence_option(ref):
         ref.view(sequence=['Q'])
 
 
+def test_sequences_only(ref):
+    """sequence_only opens the sequences (all chains, or the ones named) and no 3D view."""
+    d = _data(ref.view(sequence_only=True))
+    assert d['sequence_only'] is True and _shown(d) == ref.chains
+    assert _shown(_data(ref.view(sequence_only=True, sequence=['C']))) == ['C']
+    assert _data(ref.view())['sequence_only'] is False
+    assert 'Show 3D' in ref.view(sequence_only=True).html
+
+
 def test_long_chain_ids(ref):
     d = _data(ref.rename_chains({'A': 'MHC'}).view(regions={'r': ('MHC', 50, 60)}))
     ch = d['models'][0]['chains'][0]
@@ -273,7 +282,8 @@ def test_arrows(ref):
     assert first['start'] == pytest.approx(ca[0].tolist()) and first['group'] == 'Arrows'
     assert first['label'] is None and first['color'] == '#000000'
     assert second == {'start': pytest.approx(ca[2].tolist()), 'end': pytest.approx(ca[3].tolist()),
-                      'color': 'red', 'label': 'axis', 'radius': 0.2, 'group': 'Axes'}
+                      'color': 'red', 'label': 'axis', 'radius': 0.2, 'group': 'Axes',
+                      'head': True, 'info': None}
     assert _data(ref.view())['arrows'] == []
     assert len(_data(ref.view(arrows={'start': ca[0], 'end': ca[1]}))['arrows']) == 1
     with pytest.raises(ValueError, match='different points'):
@@ -282,3 +292,35 @@ def test_arrows(ref):
         ref.view(arrows=[([1, 2], ca[0])])
     with pytest.raises(KeyError, match='unknown keys'):
         ref.view(arrows=[{'start': ca[0], 'end': ca[1], 'colour': 'red'}])
+
+
+def test_arrows_without_a_head(ref):
+    """A contact or a bond has no direction, so it is drawn as a plain cylinder."""
+    ca = ref.coords[(ref.df['atom_name'] == 'CA').to_numpy()]
+    d = _data(ref.view(arrows=[{'start': ca[0], 'end': ca[1], 'head': False, 'info': '3.4 A'}]))
+    assert d['arrows'][0]['head'] is False and d['arrows'][0]['info'] == '3.4 A'
+
+
+def test_spheres(ref):
+    ca = ref.coords[(ref.df['atom_name'] == 'CA').to_numpy()]
+    d = _data(ref.view(spheres=[(ca[0],),
+                                {'center': ca[1], 'radius': 0.9, 'color': 'red',
+                                 'label': 'P1', 'group': 'Nodes', 'info': 'chain C 1'}]))
+    first, second = d['spheres']
+    assert first['center'] == pytest.approx(ca[0].tolist())
+    assert (first['radius'], first['group'], first['label']) == (0.6, 'Spheres', None)
+    assert second == {'center': pytest.approx(ca[1].tolist()), 'radius': 0.9, 'color': 'red',
+                      'label': 'P1', 'group': 'Nodes', 'info': 'chain C 1'}
+    assert _data(ref.view())['spheres'] == []
+    assert len(_data(ref.view(spheres={'center': ca[0]}))['spheres']) == 1
+    with pytest.raises(ValueError, match='3 numbers'):
+        ref.view(spheres=[([1, 2],)])
+    with pytest.raises(KeyError, match='unknown keys'):
+        ref.view(spheres=[{'center': ca[0], 'colour': 'red'}])
+
+
+def test_opacity(ref):
+    assert _data(ref.view())['opacity'] == 1.0
+    assert _data(ref.view(opacity=0.4))['opacity'] == 0.4
+    with pytest.raises(ValueError, match='between 0 and 1'):
+        ref.view(opacity=1.5)

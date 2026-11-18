@@ -200,28 +200,60 @@ surfBox.addEventListener('change', function() { surfaceOn = surfBox.checked; red
 surfLab.appendChild(surfBox); surfLab.appendChild(document.createTextNode(' Surface'));
 bar.appendChild(surfLab);
 
-// arrows: one checkbox per group
-var arrowsOff = {};
-(D.arrows || []).map(function(a) { return a.group; })
+// arrows and spheres: one checkbox per group, shared, so edges and their nodes switch together
+var shapesOff = {}, shapeInfo = null;
+(D.arrows || []).concat(D.spheres || []).map(function(a) { return a.group; })
   .filter(function(g, i, all) { return all.indexOf(g) === i; })
   .forEach(function(g) {
     var lab = el('label', 'check'), box = el('input');
     box.type = 'checkbox'; box.checked = true;
-    box.addEventListener('change', function() { arrowsOff[g] = !box.checked; draw(); });
+    box.addEventListener('change', function() { shapesOff[g] = !box.checked; draw(); });
     lab.appendChild(box); lab.appendChild(document.createTextNode(' ' + g));
     bar.appendChild(lab);
   });
+var arrowsOff = shapesOff;   // the old name, for anything reading it
+function point(v) { return {x: v[0], y: v[1], z: v[2]}; }
+function middle(a) {
+  return {x: (a.start[0] + a.end[0]) / 2, y: (a.start[1] + a.end[1]) / 2,
+          z: (a.start[2] + a.end[2]) / 2};
+}
+// clicking a shape that carries `info` writes it in the info line; clicking it again clears
+function clicker(shape, where) {
+  if (!shape.info) return {};
+  return {clickable: true, callback: function() {
+    shapeInfo = (shapeInfo && shapeInfo.text === shape.info) ? null
+              : {text: shape.info, color: shape.color, at: where};
+    draw();
+  }};
+}
 function drawArrows() {
   (D.arrows || []).forEach(function(a) {
-    if (arrowsOff[a.group]) return;
-    var p = function(v) { return {x: v[0], y: v[1], z: v[2]}; };
-    viewer.addArrow({start: p(a.start), end: p(a.end), radius: a.radius, radiusRatio: 2.2,
-                     mid: 0.85, color: a.color});
+    if (shapesOff[a.group]) return;
+    var spec = {start: point(a.start), end: point(a.end), radius: a.radius, color: a.color};
+    if (a.head === false) {
+      viewer.addCylinder(Object.assign(spec, clicker(a, middle(a))));
+    } else {
+      viewer.addArrow(Object.assign(spec, {radiusRatio: 2.2, mid: 0.85},
+                                    clicker(a, middle(a))));
+    }
     if (a.label) {
-      viewer.addLabel(a.label, {position: p(a.end), fontSize: 12, fontColor: 'white',
+      viewer.addLabel(a.label, {position: point(a.end), fontSize: 12, fontColor: 'white',
                                 backgroundColor: a.color, backgroundOpacity: 0.8});
     }
   });
+  (D.spheres || []).forEach(function(sp) {
+    if (shapesOff[sp.group]) return;
+    viewer.addSphere(Object.assign({center: point(sp.center), radius: sp.radius,
+                                    color: sp.color}, clicker(sp, point(sp.center))));
+    if (sp.label) {
+      viewer.addLabel(sp.label, {position: point(sp.center), fontSize: 11, fontColor: 'white',
+                                 backgroundColor: sp.color, backgroundOpacity: 0.8});
+    }
+  });
+  if (shapeInfo) {
+    viewer.addLabel(shapeInfo.text, {position: shapeInfo.at, fontSize: 12, fontColor: 'white',
+                                     backgroundColor: 'black', backgroundOpacity: 0.75});
+  }
 }
 button('Reset view', 'Back to the starting orientation and zoom', function() {
   if (viewer && startView) { viewer.setView(startView); viewer.render(); }
@@ -508,7 +540,7 @@ function measure() {
   var box = root.querySelector('.picks');
   pairs = [];
   if (!picks.length) { box.innerHTML = ''; return; }
-  if (!viewer) { box.textContent = 'Loading...'; return; }
+  if (!viewer) { box.textContent = D.sequence_only ? 'Show 3D to measure.' : 'Loading...'; return; }
   var atoms = picks.map(atomsOf);
   var html = '<table><tr><th>Picked</th><th>Regions</th><th>Atoms</th></tr>';
   picks.forEach(function(item, i) {
@@ -636,7 +668,7 @@ function draw() {
       if (selShown[k]) return D.highlight;
       if (pickedChains[m + ':' + a.chain]) return D.pick;
       return baseColor[k] || '#999999';
-    }};
+    }, opacity: D.opacity === undefined ? 1 : D.opacity};
     viewer.setStyle({model: mod}, spec);
     if (D.ligands) viewer.addStyle({model: mod, hetflag: true}, {stick: {radius: 0.25}});
   });
@@ -732,7 +764,7 @@ function makeAxes() {
 }
 
 describe();
-$3Dmolpromise.then(function() {
+function start3d() {
   var box = root.querySelector('.view');
   box.style.width = D.width + 'px'; box.style.height = D.height + 'px';
   viewer = $3Dmol.createViewer(box, {backgroundColor: 'white'});
@@ -758,4 +790,14 @@ $3Dmolpromise.then(function() {
   if (D.axes) makeAxes(); else root.querySelector('.axes').remove();
   redrawSurface();
   measure(); draw();
-});
+}
+if (!D.sequence_only) $3Dmolpromise.then(start3d);
+else {
+  // sequences only: the 3D view starts when asked for
+  root.querySelector('.view').style.display = 'none';
+  var show3d = button('Show 3D', 'Open the 3D structure under the sequences', function() {
+    root.querySelector('.view').style.display = '';
+    show3d.remove();
+    $3Dmolpromise.then(start3d);
+  });
+}

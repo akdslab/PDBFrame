@@ -98,6 +98,7 @@ ref.view(compare={'AF2': model})        # in a notebook; .save('page.html') for 
 ```
 
 Hover a residue in the 3D view or the sequence to light it up in both.
+`pf.view(sequence_only=True)` opens the sequences only, with a *Show 3D* button.
 
 ![view() comparing a model with its reference](docs/images/view_compare.png)
 
